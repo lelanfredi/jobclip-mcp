@@ -1,0 +1,37 @@
+{
+  "name": "jobclip-mcp",
+  "version": "0.1.0",
+  "description": "Servidor MCP do JobClip: deixa o Claude ler e mexer no seu ATS pessoal e no preparo das entrevistas.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lelanfredi/jobclip-mcp.git"
+  },
+  "homepage": "https://jobclip-f52f9.web.app",
+  "keywords": [
+    "mcp",
+    "jobclip",
+    "claude",
+    "vagas",
+    "entrevista"
+  ],
+  "bin": {
+    "jobclip-mcp": "./servidor.mjs"
+  },
+  "files": [
+    "servidor.mjs",
+    "dados.mjs",
+    "firestore.mjs",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "node servidor.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0"
+  },
+  "optionalDependencies": {
+    "firebase-admin": "^14.4.0"
+  }
+}
