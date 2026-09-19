@@ -13,22 +13,49 @@ O token sai do próprio app, em **Ajustes → Conectar o Claude**.
 
 ## O que ele expõe
 
+**Lê**
+
 | Ferramenta | O que faz |
 |---|---|
 | `jobclip_resumo` | estado geral: funil, agenda, o que está parado, o que falta no material |
 | `jobclip_vagas` | lista e filtra vagas; com `incluir_texto`, devolve a descrição inteira |
 | `jobclip_trajetoria` | empregos com o porquê de cada mudança, episódios e temas com os sinais |
 | `jobclip_perguntas` | banco de perguntas com as respostas por idioma |
+| `jobclip_erros` | falhas que o app gravou quando alguma tela quebrou |
+
+**Escreve**
+
+| Ferramenta | O que faz |
+|---|---|
 | `jobclip_vaga_atualizar` | move no funil, define próximo passo, anota |
 | `jobclip_resposta_salvar` | escreve ou atualiza a resposta de uma pergunta |
+| `jobclip_episodio_salvar` | registra o que aconteceu, inclusive o que deu errado |
+| `jobclip_experiencia_salvar` | um emprego, com por que entrou e por que saiu |
+| `jobclip_pergunta_salvar` | acrescenta pergunta; `origem: perguntaram` marca o que caiu de verdade |
 | `jobclip_tema_salvar` | cria ou edita um tema |
+| `jobclip_remover` | apaga de vez, sem lixeira |
+
+Atualizar **preserva o que não foi citado**: falar de um campo só não apaga os
+outros.
 
 **Não existe uma ferramenta de "analisar competências", e isso é de propósito.**
 A versão do app faz busca literal por lista de termos, porque lá não roda modelo
 nenhum. Aqui quem lê é o Claude: `jobclip_vagas` com `incluir_texto` entrega a
 descrição inteira, e a análise sai com compreensão de verdade em vez de
-correspondência de palavra. Uma ferramenta que devolvesse contagem de termos
-seria pior que o que o cliente já sabe fazer.
+correspondência de palavra.
+
+## O que dá para pedir
+
+```
+Compara as vagas que salvei e me diz o que se repete nos requisitos.
+Entrevista na Acme amanhã: lê a vaga e me diz quais perguntas provavelmente caem.
+Escreve minha resposta de "me conta sobre um fracasso" usando meus episódios reais.
+Teve uma vez que perdi um cliente por prometer data sem falar com engenharia — registra isso.
+Acabaram de me perguntar X na entrevista. Guarda no banco.
+Quais dos meus temas não têm prova nenhuma?
+Põe meus "por que saí" lado a lado. Tem um padrão?
+Move a vaga da Acme pra em processo e marca entrevista dia 25.
+```
 
 ## Configurar
 

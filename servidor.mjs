@@ -328,4 +328,170 @@ servidor.registerTool(
   },
 )
 
+/** Atualizar tem que preservar o que nao foi mencionado: o Claude quase sempre
+ *  fala de um campo so, e sobrescrever o resto com undefined apagaria trabalho
+ *  da pessoa em silencio. */
+function mesclar(atual, mudancas) {
+  const out = { ...(atual ?? {}) }
+  for (const [k, v] of Object.entries(mudancas)) {
+    if (v !== undefined) out[k] = v
+  }
+  return out
+}
+
+servidor.registerTool(
+  'jobclip_episodio_salvar',
+  {
+    title: 'Registrar ou editar um episódio',
+    description:
+      'Algo que aconteceu na carreira da pessoa: contexto, o que ela fez, o que mudou. Use quando ela ' +
+      'contar um caso e valer a pena guardar — inclusive quando deu errado, porque "me conta sobre um ' +
+      'fracasso" é pergunta garantida.\n\n' +
+      'Escreva com as palavras dela. Não invente número, empresa nem resultado: se algo faltar, ' +
+      'pergunte em vez de preencher. Ligue a uma experiência sempre que souber qual foi, e a temas ' +
+      'quando houver — sem tema o episódio não encontra pergunta nenhuma.',
+    inputSchema: {
+      id: z.string().optional().describe('vazio cria um novo; preencher edita e preserva o que não for citado'),
+      titulo: z.string().optional().describe('uma linha, do jeito que ela contaria'),
+      experiencia_id: z.string().optional().describe('de jobclip_trajetoria'),
+      contexto: z.string().optional().describe('qual era a situação'),
+      acao: z.string().optional().describe('o que ela fez'),
+      resultado: z.string().optional().describe('o que mudou por causa disso'),
+      numeros: z.string().optional().describe('o número que fica na cabeça de quem ouve, ex: "11 → 1"'),
+      quando: z.string().optional().describe('AAAA-MM; é o que posiciona na linha do tempo'),
+      desfecho: z.enum(['bom', 'ruim', 'misto']).optional(),
+      tema_ids: z.array(z.string()).optional(),
+    },
+  },
+  async (a) => {
+    const episodios = await dados.listar('episodios')
+    const atual = a.id ? episodios.find((e) => e.id === a.id) : null
+    if (a.id && !atual) return erro(`Episódio ${a.id} não encontrado.`)
+    if (!atual && !a.titulo?.trim()) return erro('Um episódio novo precisa de título.')
+
+    const e = mesclar(atual, {
+      id: atual?.id ?? novoId(),
+      titulo: a.titulo,
+      experienciaId: a.experiencia_id,
+      contexto: a.contexto,
+      acao: a.acao,
+      resultado: a.resultado,
+      numeros: a.numeros,
+      quando: a.quando,
+      desfecho: a.desfecho ?? atual?.desfecho ?? 'bom',
+      temaIds: a.tema_ids ?? atual?.temaIds ?? [],
+      criadaEm: atual?.criadaEm ?? agora(),
+    })
+    await dados.gravar('episodios', e)
+    return texto(`${atual ? 'Atualizado' : 'Registrado'}: ${e.titulo}`)
+  },
+)
+
+servidor.registerTool(
+  'jobclip_experiencia_salvar',
+  {
+    title: 'Registrar ou editar uma experiência',
+    description:
+      'Um emprego na trajetória. Os dois campos que a entrevista mais cobra e que não existem em CV ' +
+      'nenhum são porQueEntrou e porQueSaiu — vale insistir neles, com as palavras dela.\n\n' +
+      'Para importar um currículo inteiro, prefira a tela de Trajetória do app: ela lê as datas e ' +
+      'mostra tudo para conferir antes de gravar.',
+    inputSchema: {
+      id: z.string().optional().describe('vazio cria uma nova'),
+      empresa: z.string().optional(),
+      cargo: z.string().optional(),
+      inicio: z.string().optional().describe('AAAA-MM'),
+      fim: z.string().optional().describe('AAAA-MM; vazio significa emprego atual'),
+      o_que_fazia: z.string().optional(),
+      por_que_entrou: z.string().optional(),
+      por_que_saiu: z.string().optional().describe('no emprego atual, por que quer sair'),
+    },
+  },
+  async (a) => {
+    const experiencias = await dados.listar('experiencias')
+    const atual = a.id ? experiencias.find((e) => e.id === a.id) : null
+    if (a.id && !atual) return erro(`Experiência ${a.id} não encontrada.`)
+    if (!atual && !a.empresa?.trim() && !a.cargo?.trim()) {
+      return erro('Uma experiência nova precisa de empresa ou cargo.')
+    }
+
+    const e = mesclar(atual, {
+      id: atual?.id ?? novoId(),
+      empresa: a.empresa,
+      cargo: a.cargo,
+      inicio: a.inicio,
+      fim: a.fim,
+      oQueFazia: a.o_que_fazia,
+      porQueEntrou: a.por_que_entrou,
+      porQueSaiu: a.por_que_saiu,
+    })
+    await dados.gravar('experiencias', e)
+    return texto(`${atual ? 'Atualizada' : 'Registrada'}: ${e.cargo ?? ''} · ${e.empresa ?? ''}`)
+  },
+)
+
+servidor.registerTool(
+  'jobclip_pergunta_salvar',
+  {
+    title: 'Registrar ou editar uma pergunta',
+    description:
+      'Acrescenta uma pergunta ao banco. O caso mais valioso é registrar o que perguntaram DE VERDADE ' +
+      'numa entrevista: use origem "perguntaram" e informe a vaga, porque é esse sinal que diz quais ' +
+      'perguntas voltam.\n\n' +
+      'Escreva o enunciado do jeito que foi feito, no idioma em que foi feito.',
+    inputSchema: {
+      id: z.string().optional().describe('vazio cria uma nova'),
+      texto: z.string().optional().describe('o enunciado'),
+      idioma: z.enum(['pt', 'en', 'es']).optional().describe('padrão pt'),
+      label: z.string().optional().describe('nome curto para a lista; sem ele usa o começo do enunciado'),
+      momento: z.enum(['abertura', 'meio', 'fechamento']).optional(),
+      origem: z.enum(['minha', 'perguntaram']).optional(),
+      vaga_id: z.string().optional().describe('quando origem = perguntaram'),
+      tema_ids: z.array(z.string()).optional(),
+    },
+  },
+  async (a) => {
+    const perguntas = await dados.listar('perguntas')
+    const atual = a.id ? perguntas.find((p) => p.id === a.id) : null
+    if (a.id && !atual) return erro(`Pergunta ${a.id} não encontrada.`)
+    if (!atual && !a.texto?.trim()) return erro('Uma pergunta nova precisa do enunciado.')
+
+    const idioma = a.idioma ?? 'pt'
+    const p = mesclar(atual, {
+      id: atual?.id ?? novoId(),
+      label: a.label ?? atual?.label ?? a.texto.slice(0, 42),
+      texto: a.texto ? { ...(atual?.texto ?? {}), [idioma]: a.texto } : atual?.texto,
+      momento: a.momento ?? atual?.momento ?? 'meio',
+      origem: a.origem ?? atual?.origem ?? 'minha',
+      vagaId: a.vaga_id,
+      temaIds: a.tema_ids ?? atual?.temaIds ?? [],
+      ordem: atual?.ordem ?? perguntas.length,
+    })
+    await dados.gravar('perguntas', p)
+    return texto(`${atual ? 'Atualizada' : 'Registrada'}: ${p.label}`)
+  },
+)
+
+servidor.registerTool(
+  'jobclip_remover',
+  {
+    title: 'Apagar um registro',
+    description:
+      'Apaga de vez, sem lixeira. Confirme com a pessoa antes — cite o que vai sumir, pelo nome, e ' +
+      'espere ela dizer que sim. Nunca apague em lote sem ela ter pedido em lote.',
+    inputSchema: {
+      colecao: z.enum(['vagas', 'perguntas', 'respostas', 'episodios', 'experiencias', 'temas', 'preparos', 'erros']),
+      id: z.string(),
+    },
+  },
+  async ({ colecao, id }) => {
+    const itens = await dados.listar(colecao)
+    const alvo = itens.find((x) => x.id === id)
+    if (!alvo) return erro(`Nada com o id ${id} em ${colecao}.`)
+    await dados.remover(colecao, id)
+    const nome = alvo.titulo ?? alvo.label ?? alvo.nome ?? alvo.cargo ?? id
+    return texto(`Apagado de ${colecao}: ${nome}`)
+  },
+)
+
 await servidor.connect(new StdioServerTransport())
