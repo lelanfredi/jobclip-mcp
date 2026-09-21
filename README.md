@@ -79,6 +79,39 @@ seu navegador**. Se as regras não deixam você ler o dado de outra pessoa, o
 servidor também não consegue. Trate como senha: não publique e não mande por
 chat. Se vazar, saia da conta em todos os dispositivos e pegue um comando novo.
 
+### No Claude Desktop
+
+O aplicativo não lê o comando do terminal: a configuração é um arquivo. Pegue o
+token no mesmo lugar (é o trecho depois de `JOBCLIP_TOKEN=`) e ponha em
+`claude_desktop_config.json` — no Mac, dentro de
+`~/Library/Application Support/Claude/`:
+
+```json
+{
+  "mcpServers": {
+    "jobclip": {
+      "command": "npx",
+      "args": ["-y", "github:lelanfredi/jobclip-mcp"],
+      "env": { "JOBCLIP_TOKEN": "seu-token-aqui" }
+    }
+  }
+}
+```
+
+Reinicie o aplicativo depois de salvar.
+
+### No ChatGPT: ainda não dá
+
+O ChatGPT só conecta em servidor MCP que mora na internet, com endereço próprio.
+Este aqui roda na sua máquina e conversa por stdio — é o modo que o Claude Code e
+o Claude Desktop usam, e é o que permite falar com o Firestore usando **o seu**
+token, sem intermediário.
+
+Para valer no ChatGPT, o servidor teria que ficar hospedado em algum lugar,
+guardando o token de cada pessoa que usa. Isso tem custo recorrente e muda o
+risco de lugar: hoje, se ninguém hospeda nada, não há o que vazar. Por isso ficou
+de fora — não por falta de suporte do protocolo.
+
 ### Sem conexão: um arquivo exportado
 
 No app: **Ajustes → Seus dados → Exportar tudo (JSON)**. Depois:
