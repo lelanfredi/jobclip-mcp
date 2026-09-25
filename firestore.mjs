@@ -14,11 +14,35 @@
 const ENDERECO_TOKEN = 'https://securetoken.googleapis.com/v1/token'
 const ENDERECO_DB = 'https://firestore.googleapis.com/v1'
 
-// Config pública do projeto (a mesma que vai no navegador). Não é segredo:
-// quem protege os dados são as regras do Firestore.
-const PADRAO = {
-  apiKey: 'AIzaSyAApHatn28dMvYAHp6ug8zODfMzKmjkBhI',
-  projeto: 'jobclip-f52f9',
+// Qual projeto Firebase. Vem de fora, sempre -- não há valor padrão aqui, e
+// isso é deliberado.
+//
+// POR QUE NÃO TEM PADRÃO
+// Havia: a chave e o id do projeto do JobClip vinham embutidos. A chave web do
+// Firebase de fato não é segredo (ela vai em todo cliente web; quem protege os
+// dados são as regras do Firestore), e o comentário que estava aqui dizia isso
+// e estava certo.
+//
+// O problema era outro, e maior: com um padrão, quem instalasse este servidor e
+// configurasse só o próprio token acabaria falando com o projeto de OUTRA
+// pessoa -- a dona do padrão. Um servidor que serve a qualquer um não pode vir
+// apontado para o Firebase de alguém.
+//
+// De quebra resolve o alerta do GitHub, que não sabe distinguir chave pública
+// de credencial — e um alerta que não dá para distinguir de vazamento real tem
+// custo próprio.
+function config(opcoes) {
+  const apiKey = opcoes.apiKey ?? process.env.JOBCLIP_API_KEY
+  const projeto = opcoes.projeto ?? process.env.JOBCLIP_PROJECT
+  if (!apiKey || !projeto) {
+    throw new Error(
+      'Faltou dizer qual projeto Firebase usar.\n\n' +
+        'Abra o JobClip em Ajustes → Conectar o Claude: o comando de lá já vem\n' +
+        'com JOBCLIP_API_KEY e JOBCLIP_PROJECT preenchidos.\n\n' +
+        'Sem conexão, use JOBCLIP_BACKUP com um arquivo exportado.',
+    )
+  }
+  return { apiKey, projeto }
 }
 
 // ---------------------------------------------------------------- conversão
@@ -64,8 +88,7 @@ const deCampos = (campos) =>
 // ---------------------------------------------------------------- backend
 
 export async function backendPessoa(tokenDeAtualizacao, opcoes = {}) {
-  const apiKey = opcoes.apiKey ?? process.env.JOBCLIP_API_KEY ?? PADRAO.apiKey
-  const projeto = opcoes.projeto ?? process.env.JOBCLIP_PROJECT ?? PADRAO.projeto
+  const { apiKey, projeto } = config(opcoes)
 
   let acesso = null
   let expiraEm = 0

@@ -6,8 +6,15 @@ escrever resposta de entrevista na sua voz a partir dos seus próprios episódio
 formular a tese de um tema, mover uma vaga.
 
 ```bash
-claude mcp add jobclip -e JOBCLIP_TOKEN=... -- npx -y github:lelanfredi/jobclip-mcp
+claude mcp add jobclip \
+  -e JOBCLIP_TOKEN=... -e JOBCLIP_PROJECT=... -e JOBCLIP_API_KEY=... \
+  -- npx -y github:lelanfredi/jobclip-mcp
 ```
+
+As três vêm no comando que a tela gera. `JOBCLIP_PROJECT` e `JOBCLIP_API_KEY`
+dizem **qual Firebase** usar: este servidor não vem apontado para nenhum. Se
+viesse, quem instalasse com o próprio token acabaria falando com o projeto de
+outra pessoa.
 
 O token sai do próprio app, em **Ajustes → Conectar o Claude**.
 
@@ -68,8 +75,15 @@ Move a vaga da Acme pra em processo e marca entrevista dia 25.
 O comando fica assim, com o seu token no lugar do `...`:
 
 ```bash
-claude mcp add jobclip -e JOBCLIP_TOKEN=... -- npx -y github:lelanfredi/jobclip-mcp
+claude mcp add jobclip \
+  -e JOBCLIP_TOKEN=... -e JOBCLIP_PROJECT=... -e JOBCLIP_API_KEY=... \
+  -- npx -y github:lelanfredi/jobclip-mcp
 ```
+
+As três vêm no comando que a tela gera. `JOBCLIP_PROJECT` e `JOBCLIP_API_KEY`
+dizem **qual Firebase** usar: este servidor não vem apontado para nenhum. Se
+viesse, quem instalasse com o próprio token acabaria falando com o projeto de
+outra pessoa.
 
 Não precisa clonar nada: o `npx` busca e roda direto deste repositório.
 
@@ -120,6 +134,8 @@ No app: **Ajustes → Seus dados → Exportar tudo (JSON)**. Depois:
 claude mcp add jobclip -e JOBCLIP_BACKUP=$HOME/Downloads/jobclip-2026-09-19.json \
   -- npx -y github:lelanfredi/jobclip-mcp
 ```
+
+Este modo não pede projeto nem chave: não fala com o Firebase.
 
 Lê e escreve nesse arquivo, sem credencial nenhuma. Para levar as mudanças de
 volta, importe o arquivo em Ajustes → Seus dados. Bom para usar offline ou para
